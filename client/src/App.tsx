@@ -2,6 +2,7 @@ import { publicRoutes } from "./main/routes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "./App.css";
+import { Layout } from "./components/Layout";
 
 const Routing = () => {
   return (
@@ -9,7 +10,7 @@ const Routing = () => {
       {publicRoutes.map((route) => (
         <Route
           key={route.path}
-          element={route.component}
+          element={<Layout>{route.component}</Layout>}
           path={route.path}
         ></Route>
       ))}

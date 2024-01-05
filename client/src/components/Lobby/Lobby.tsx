@@ -20,7 +20,7 @@ export const Lobby = () => {
   };
 
   return (
-    <Container className="min-h-[calc(100vh-4rem)]">
+    <Container className="min-h-[calc(100vh-4rem)] px-4">
       <Sidebar
         style={{ display: "flex", flexDirection: "column" }}
         width={400}
