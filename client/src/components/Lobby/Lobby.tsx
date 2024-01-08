@@ -1,12 +1,4 @@
-import {
-  Button,
-  Container,
-  Content,
-  Input,
-  Modal,
-  Sidebar,
-  Sidenav,
-} from "rsuite";
+import { Button, Container, Content, Input, Sidebar, Sidenav } from "rsuite";
 import { Chat } from "../Chat";
 import { useNavigate } from "react-router-dom";
 import { useUnit } from "effector-react";
@@ -16,37 +8,17 @@ import {
   lobbyIdChanged,
   userNameChanged,
 } from "../../store/lobby";
-import { useState } from "react";
-
-interface LobbyCreationProps {
-  isOpen: boolean;
-  close: () => void;
-}
-
-export const LobbyCreation = ({ isOpen, close }: LobbyCreationProps) => {
-  return (
-    <Modal onClose={close} open={isOpen} title="Create a lobby">
-      <Modal.Header onClose={close}>Create a Lobby</Modal.Header>
-
-      <Modal.Body>Let's write information about lobby</Modal.Body>
-    </Modal>
-  );
-};
+import { socket } from "../../socket";
+import { useEffect } from "react";
 
 export const Lobby = () => {
   const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
   const [username, changeUserName] = useUnit([$username, userNameChanged]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const navigate = useNavigate();
 
   const handleCreateLobby = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+    socket.emit("lobby-create");
   };
 
   const handleJoinLobby = () => {
@@ -56,6 +28,18 @@ export const Lobby = () => {
 
     navigate(`/game/${lobbyId}`);
   };
+
+  useEffect(() => {
+    function lobbyCreated(lobbyId: string) {
+      navigate(`/game/${lobbyId}`);
+    }
+
+    socket.on("lobby-created", lobbyCreated);
+
+    return () => {
+      socket.off("lobby-created", lobbyCreated);
+    };
+  }, [navigate]);
 
   return (
     <Container className="min-h-[calc(100vh-4rem)] px-4">
@@ -91,8 +75,6 @@ export const Lobby = () => {
           </div>
         </Content>
       </Container>
-
-      <LobbyCreation isOpen={isModalOpen} close={handleCloseModal} />
     </Container>
   );
 };

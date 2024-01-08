@@ -3,10 +3,12 @@ import { GameTable } from "./GameTable/GameTable";
 import { players } from "./temporary";
 import { Role, RoleId } from "../../models/role";
 import { useEffect, useState } from "react";
+import { socket } from "../../socket";
+
 
 interface GameProps {
   lobbyId: Lobby["lobbyId"];
-  gameState: GameI["gameState"];
+  gameState?: GameI["gameState"];
   username: string;
 }
 
@@ -41,15 +43,9 @@ export const Game = ({ lobbyId, username }: GameProps) => {
     timeLeft: timeLeft,
   };
 
-  // useEffect(() => {
-  //   const timerId = window.setInterval(() => {
-  //     setTimeLeft((time) => --time);
-  //   }, 1000);
-
-  //   return () => {
-  //     window.clearInterval(timerId);
-  //   };
-  // }, []);
+  useEffect(() => {
+    socket.emit("lobby-join", "fbn85x");
+  }, [lobbyId]);
 
   return (
     <div>
