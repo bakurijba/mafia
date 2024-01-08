@@ -1,37 +1,71 @@
-import { useState } from "react";
-import { Button, Container, Content, Input, Sidebar, Sidenav } from "rsuite";
+import {
+  Button,
+  Container,
+  Content,
+  Input,
+  Modal,
+  Sidebar,
+  Sidenav,
+} from "rsuite";
 import { Chat } from "../Chat";
 import { useNavigate } from "react-router-dom";
+import { useUnit } from "effector-react";
+import {
+  $lobbyId,
+  $username,
+  lobbyIdChanged,
+  userNameChanged,
+} from "../../store/lobby";
+import { useState } from "react";
+
+interface LobbyCreationProps {
+  isOpen: boolean;
+  close: () => void;
+}
+
+export const LobbyCreation = ({ isOpen, close }: LobbyCreationProps) => {
+  return (
+    <Modal onClose={close} open={isOpen} title="Create a lobby">
+      <Modal.Header onClose={close}>Create a Lobby</Modal.Header>
+
+      <Modal.Body>Let's write information about lobby</Modal.Body>
+    </Modal>
+  );
+};
 
 export const Lobby = () => {
-  const [lobbyId, setLobbyId] = useState("");
-  const [username, setUsername] = useState("");
+  const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
+  const [username, changeUserName] = useUnit([$username, userNameChanged]);
 
-  const navigate = useNavigate()
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleCreateLobby = () => {
-    // Implement logic to create a lobby
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
   const handleJoinLobby = () => {
-    navigate('/game/bak')
+    if (!lobbyId || !username) {
+      return;
+    }
 
-    // Implement logic to join a lobby
+    navigate(`/game/${lobbyId}`);
   };
 
   return (
     <Container className="min-h-[calc(100vh-4rem)] px-4">
-      <Sidebar
-        style={{ display: "flex", flexDirection: "column" }}
-        width={400}
-        collapsible
-      >
+      <Sidebar className="flex flex-col max-h-[80vh]" width={400}>
         <Sidenav.Header>
           <div>
             <h2 style={{ marginLeft: 12 }}>Chat</h2>
           </div>
         </Sidenav.Header>
-        <Sidenav.Body className="flex-1">
+        <Sidenav.Body className="flex-1 max-h-full">
           <Chat />
         </Sidenav.Body>
       </Sidebar>
@@ -44,19 +78,21 @@ export const Lobby = () => {
               type="text"
               placeholder="Enter Lobby ID"
               value={lobbyId}
-              onChange={(value) => setLobbyId(value)}
+              onChange={(value) => changeLobbyId(value)}
             />
             <Input
               type="text"
               placeholder="Enter Your Username"
               value={username}
-              onChange={(value) => setUsername(value)}
+              onChange={(value) => changeUserName(value)}
             />
             <Button onClick={handleCreateLobby}>Create Lobby</Button>
             <Button onClick={handleJoinLobby}>Join Lobby</Button>
           </div>
         </Content>
       </Container>
+
+      <LobbyCreation isOpen={isModalOpen} close={handleCloseModal} />
     </Container>
   );
 };

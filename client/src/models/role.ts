@@ -6,8 +6,17 @@ type RoleName =
   | "don"
   | "detective";
 
+export enum RoleId {
+  TOWNPERSON = 1,
+  DOCTOR,
+  DETECTIVE,
+  MAFIA,
+  DON,
+  KILLER,
+}
+
 export interface BasicRole {
-  roleId: string;
+  roleId: RoleId;
   name: RoleName;
   description: string;
 }

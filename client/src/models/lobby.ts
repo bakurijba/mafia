@@ -10,7 +10,7 @@ export interface Lobby {
   configuration: LobbyConfiguration;
 }
 
-export interface Game {
+export interface GameI {
   lobbyId: Lobby["lobbyId"];
   gameId: string;
   gameState: GameState;

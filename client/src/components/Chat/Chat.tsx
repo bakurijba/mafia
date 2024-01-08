@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { socket } from "../../socket";
-import { FormEventHandler, useEffect, useState } from "react";
+import { FormEventHandler, useEffect, useRef, useState } from "react";
 import { Button, Input } from "rsuite";
 
 interface MessageReceive {
@@ -12,6 +12,8 @@ export const Chat = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<MessageReceive[]>([]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const handleSendMessage: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
 
@@ -21,6 +23,8 @@ export const Chat = () => {
   };
 
   useEffect(() => {
+    // adding new messages
+
     function onMessage({ userId, message }: MessageReceive) {
       setMessages((prev) => [...prev, { userId, message }]);
 
@@ -34,9 +38,25 @@ export const Chat = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // scrolling down when new messages appears
+
+    function updateScrollPosition() {
+      if (!containerRef.current) {
+        return;
+      }
+
+      const { scrollHeight } = containerRef.current;
+
+      containerRef.current.scrollTo({ top: scrollHeight });
+    }
+
+    updateScrollPosition();
+  }, [messages]);
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1">
+    <div className="h-full flex flex-col max-h-full">
+      <div className="flex-1 max-h-full overflow-y-auto" ref={containerRef}>
         {messages.map((msg, index) => (
           <div
             key={index}
