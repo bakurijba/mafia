@@ -4,7 +4,8 @@ const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const Lobby = require("./models/lobby");
 
-const DB_URL = "mongodb+srv://bjobava1:9CpdUpb7wTXEo7IJ@cluster0.gglymvg.mongodb.net/?retryWrites=true&w=majority";
+const DB_URL =
+  "mongodb+srv://bjobava1:9CpdUpb7wTXEo7IJ@cluster0.gglymvg.mongodb.net/?retryWrites=true&w=majority";
 const PORT = 3000;
 const CLIENT_ORIGIN = "http://localhost:5173";
 
@@ -43,17 +44,18 @@ const handleUserConnection = (socket) => {
   });
 
   socket.on("lobby-create", handleLobbyCreation(socket));
-  socket.on("lobby-join", handleLobbyJoin(socket));
+  socket.on("user-joined", handleUserJoin(socket));
+  socket.on("user-left", handleUserLeft(socket));
   socket.on("disconnect", handleUserDisconnect(socket));
 };
 
-const handleLobbyCreation = (socket) => async () => {
+const handleLobbyCreation = (socket) => async (username) => {
   try {
     const lobbyId = generateUniqueId();
     const lobby = new Lobby({
       id: lobbyId,
-      users: [socket.id],
-      maxUsers: 11,
+      players: [{ id: socket.id, username }],
+      maxPlayers: 11,
     });
 
     await lobby.save();
@@ -66,21 +68,54 @@ const handleLobbyCreation = (socket) => async () => {
   }
 };
 
-const handleLobbyJoin = (socket) => async (lobbyId) => {
+const handleUserJoin = (socket) => async (lobbyId, username) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
+
+    const isPlayerInLobby = lobby.players.some(
+      (player) => player.id === socket.id
+    );
 
     if (lobby) {
       socket.join(lobbyId);
 
-      if (!lobby.users.includes(socket.id)) {
-        lobby.users = [...lobby.users, socket.id]
+      if (!isPlayerInLobby && lobby.players.length <= lobby.maxPlayers) {
+        lobby.players = [...lobby.players, { id: socket.id, username }];
       }
 
       await lobby.save();
-      socket.emit("lobby-joined", lobby);
+      socket.emit("user-joined", lobby);
 
       console.log(`${socket.id} joined lobby ${lobbyId}`);
+    } else {
+      socket.emit("lobby-not-found", { error: "Lobby not found" });
+    }
+  } catch (error) {
+    console.error("Error joining lobby:", error.message);
+  }
+};
+
+const handleUserLeft = (socket) => async (lobbyId) => {
+  try {
+    const lobby = await Lobby.findOne({ id: lobbyId });
+
+    const isPlayerInLobby = lobby.players.some(
+      (player) => player.id === socket.id
+    );
+
+    if (lobby) {
+      socket.off(lobbyId);
+
+      if (isPlayerInLobby) {
+        lobby.players = lobby.players.filter(
+          (player) => player.id !== socket.id
+        );
+      }
+
+      await lobby.save();
+      socket.emit("user-left", lobby);
+
+      console.log(`${socket.id} left lobby ${lobbyId}`);
     } else {
       // console.log("lobbyNotFound");
       socket.emit("lobby-not-found", { error: "Lobby not found" });
@@ -94,13 +129,15 @@ const handleUserDisconnect = (socket) => async () => {
   console.log(`${socket.id} user disconnected`);
 
   try {
-    const userLobbies = await Lobby.find({ users: socket.id });
+    const userLobbies = await Lobby.find({ players: socket.id });
 
     for (const lobby of userLobbies) {
-      const index = lobby.users.indexOf(socket.id);
+      const isPlayerInLobby = lobby.players.some(
+        (player) => player.id === socket.id
+      );
 
-      if (index !== -1) {
-        lobby.users.splice(index, 1);
+      if (isPlayerInLobby) {
+        lobby.players.splice(index, 1);
         io.to(lobby.id).emit("user-disconnected", { userId: socket.id });
         console.log(`${socket.id} removed from lobby ${lobby.id}`);
         await lobby.save();
