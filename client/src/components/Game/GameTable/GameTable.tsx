@@ -3,6 +3,8 @@ import { GameI } from "../../../models/lobby";
 import { players } from "../temporary";
 import { Modal, Popover, Whisper } from "rsuite";
 import { RoleId } from "../../../models/role";
+import { useUnit } from "effector-react";
+import { $lobby } from "../../../store/lobby";
 
 const seatStyle = {
   width: "20px",
@@ -67,9 +69,11 @@ const Seat: React.FC<SeatProps> = ({
   playerId,
   gameState,
 }) => {
-  const playerName = players.find(
-    (play) => play.playerId === playerId
-  )!.username;
+  const players = useUnit($lobby)?.players || [];
+
+  const playerName = players.find((play) => play.id === playerId)?.username;
+
+  console.log(players,playerName)
 
   const playerRole = gameState.roles?.get(playerId)?.roleId;
 

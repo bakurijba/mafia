@@ -4,7 +4,8 @@ import { players } from "./temporary";
 import { Role, RoleId } from "../../models/role";
 import { useEffect, useState } from "react";
 import { socket } from "../../socket";
-
+import { useUnit } from "effector-react";
+import { $lobby } from "../../store/lobby";
 
 interface GameProps {
   lobbyId: Lobby["lobbyId"];
@@ -30,6 +31,8 @@ const initRoles = () => {
 export const Game = ({ lobbyId, username }: GameProps) => {
   const [roles, setRoles] = useState<Map<string, Role>>();
 
+  const lobby = useUnit($lobby);
+
   const [timeLeft, setTimeLeft] = useState<number>(1000);
 
   useEffect(() => {
@@ -38,14 +41,14 @@ export const Game = ({ lobbyId, username }: GameProps) => {
 
   const gameState: GameI["gameState"] = {
     phase: "day",
-    remainingUsers: players.map((play) => play.playerId),
+    remainingUsers: lobby?.players.map((player) => player.id) || [],
     roles: roles!,
     timeLeft: timeLeft,
   };
 
   useEffect(() => {
-    socket.emit("lobby-join", "fbn85x");
-  }, [lobbyId]);
+    socket.emit("user-joined", lobbyId, username);
+  }, [lobbyId, username]);
 
   return (
     <div>

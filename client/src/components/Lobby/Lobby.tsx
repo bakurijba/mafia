@@ -1,4 +1,12 @@
-import { Button, Container, Content, Input, Sidebar, Sidenav } from "rsuite";
+import {
+  Button,
+  Container,
+  Content,
+  Input,
+  Modal,
+  Sidebar,
+  Sidenav,
+} from "rsuite";
 import { Chat } from "../Chat";
 import { useNavigate } from "react-router-dom";
 import { useUnit } from "effector-react";
@@ -9,16 +17,25 @@ import {
   userNameChanged,
 } from "../../store/lobby";
 import { socket } from "../../socket";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const Lobby = () => {
   const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
   const [username, changeUserName] = useUnit([$username, userNameChanged]);
 
+  const [registerUserName, setRegisterUserName] = useState("");
+
+  const [isOpen, setIsOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleCreateLobby = () => {
-    socket.emit("lobby-create");
+    socket.emit("lobby-create", registerUserName);
+    setIsOpen(false);
+  };
+
+  const handleOpen = () => {
+    setIsOpen(true);
   };
 
   const handleJoinLobby = () => {
@@ -70,11 +87,37 @@ export const Lobby = () => {
               value={username}
               onChange={(value) => changeUserName(value)}
             />
-            <Button onClick={handleCreateLobby}>Create Lobby</Button>
             <Button onClick={handleJoinLobby}>Join Lobby</Button>
+
+            <Button onClick={handleOpen} appearance="ghost">
+              Create Lobby
+            </Button>
           </div>
         </Content>
       </Container>
+
+      <Modal open={isOpen} onClose={() => setIsOpen(false)}>
+        <Modal.Header>Create a lobby</Modal.Header>
+
+        <Modal.Body>
+          <div className="flex flex-col">
+            <Input
+              type="text"
+              placeholder="Enter Your Username"
+              value={registerUserName}
+              onChange={(value) => setRegisterUserName(value)}
+            />
+
+            <Button
+              onClick={handleCreateLobby}
+              appearance="primary"
+              className="ml-auto mt-2"
+            >
+              Create
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
