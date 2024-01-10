@@ -3,11 +3,10 @@ const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const Lobby = require("./models/lobby");
-
-const DB_URL =
-  "mongodb+srv://bjobava1:9CpdUpb7wTXEo7IJ@cluster0.gglymvg.mongodb.net/?retryWrites=true&w=majority";
 const PORT = 3000;
 const CLIENT_ORIGIN = "http://localhost:5173";
+
+require("dotenv").config();
 
 const startServer = (port) => {
   const server = http.createServer(app);
@@ -22,7 +21,7 @@ const startServer = (port) => {
 
 const connectToDatabase = async () => {
   try {
-    await mongoose.connect(DB_URL);
+    await mongoose.connect(process.env.DB_URL);
     console.log("Connected to the database");
   } catch (error) {
     console.error("Error connecting to the database:", error.message);
@@ -56,6 +55,7 @@ const handleLobbyCreation = (socket) => async (username) => {
       id: lobbyId,
       players: [{ id: socket.id, username }],
       maxPlayers: 11,
+      status: 'waiting'
     });
 
     await lobby.save();
@@ -77,6 +77,7 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
     );
 
     if (lobby) {
+      // I join user to some lobby I want to create namespace no emit message to that namespace
       socket.join(lobbyId);
 
       if (!isPlayerInLobby && lobby.players.length <= lobby.maxPlayers) {
@@ -84,7 +85,10 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
       }
 
       await lobby.save();
-      socket.emit("user-joined", lobby);
+
+      // here instead of emitting event to single socket, I must emit it to namespace
+      io.to(lobbyId).emit("user-joined", { userId: socket.id, username });
+      io.to(lobbyId).emit("lobby-updated", lobby);
 
       console.log(`${socket.id} joined lobby ${lobbyId}`);
     } else {
@@ -104,20 +108,22 @@ const handleUserLeft = (socket) => async (lobbyId) => {
     );
 
     if (lobby) {
-      socket.off(lobbyId);
+      socket.leave(lobbyId);
 
-      if (isPlayerInLobby) {
-        lobby.players = lobby.players.filter(
-          (player) => player.id !== socket.id
-        );
+      const index = lobby.players.findIndex(
+        (player) => player.id === socket.id
+      );
+      if (isPlayerInLobby && index !== -1) {
+        lobby.players.splice(index, 1);
       }
 
       await lobby.save();
-      socket.emit("user-left", lobby);
+
+      io.to(lobbyId).emit("user-left", { userId: socket.id });
+      io.to(lobbyId).emit("lobby-updated", lobby);
 
       console.log(`${socket.id} left lobby ${lobbyId}`);
     } else {
-      // console.log("lobbyNotFound");
       socket.emit("lobby-not-found", { error: "Lobby not found" });
     }
   } catch (error) {
@@ -129,7 +135,9 @@ const handleUserDisconnect = (socket) => async () => {
   console.log(`${socket.id} user disconnected`);
 
   try {
-    const userLobbies = await Lobby.find({ players: socket.id });
+    const userLobbies = await Lobby.find({
+      players: { $elemMatch: { id: socket.id } },
+    });
 
     for (const lobby of userLobbies) {
       const isPlayerInLobby = lobby.players.some(
@@ -137,14 +145,22 @@ const handleUserDisconnect = (socket) => async () => {
       );
 
       if (isPlayerInLobby) {
-        lobby.players.splice(index, 1);
-        io.to(lobby.id).emit("user-disconnected", { userId: socket.id });
-        console.log(`${socket.id} removed from lobby ${lobby.id}`);
-        await lobby.save();
+        const index = lobby.players.findIndex(
+          (player) => player.id === socket.id
+        );
+
+        if (index !== -1) {
+          lobby.players.splice(index, 1);
+          io.to(lobby.id).emit("user-disconnected", { userId: socket.id });
+          console.log(`${socket.id} removed from lobby ${lobby.id}`);
+          await lobby.save();
+
+          io.to(lobby.id).emit("lobby-updated", lobby);
+        }
       }
     }
 
-    await Lobby.deleteMany({ users: { $size: 0 } });
+    await Lobby.deleteMany({ players: { $size: 0 } });
   } catch (error) {
     console.error("Error handling disconnect:", error.message);
   }

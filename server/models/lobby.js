@@ -1,10 +1,6 @@
 // Define a schema for lobbies
 const { Schema, model } = require("mongoose");
-
-const playerSchema = new Schema({
-  id: String,
-  username: String,
-});
+const playerSchema = require('./player').playerSchema
 
 const lobbySchema = new Schema({
     id: String,
