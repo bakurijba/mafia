@@ -1,11 +1,9 @@
 import { GameI, Lobby } from "../../models/lobby";
-import { GameTable } from "./GameTable/GameTable";
-import { players } from "./temporary";
+import { GameTable } from "./GameTable";
 import { Role, RoleId } from "../../models/role";
 import { useEffect, useState } from "react";
-import { socket } from "../../socket";
 import { useUnit } from "effector-react";
-import { $lobby } from "../../store/lobby";
+import { $lobby, SimpleLobby } from "../../store/lobby";
 
 interface GameProps {
   lobbyId: Lobby["lobbyId"];
@@ -13,11 +11,15 @@ interface GameProps {
   username: string;
 }
 
-const initRoles = () => {
+const initRoles = (players?: SimpleLobby["players"]) => {
   const map = new Map<string, Role>();
 
+  if (!players?.length) {
+    return new Map();
+  }
+
   for (let i = 0; i < players.length; i++) {
-    map.set(players[i].playerId, {
+    map.set(players[i].id, {
       name: i % 2 === 0 ? "mafia" : "townperson",
       roleId: i % 2 === 0 ? RoleId.MAFIA : RoleId.TOWNPERSON,
       ability: i % 2 === 0 ? "kill" : "save",
@@ -33,29 +35,23 @@ export const Game = ({ lobbyId, username }: GameProps) => {
 
   const lobby = useUnit($lobby);
 
-  const [timeLeft, setTimeLeft] = useState<number>(1000);
-
   useEffect(() => {
-    setRoles(initRoles());
-  }, []);
+    setRoles(initRoles(lobby?.players));
+  }, [lobby?.players]);
 
   const gameState: GameI["gameState"] = {
     phase: "day",
     remainingUsers: lobby?.players.map((player) => player.id) || [],
     roles: roles!,
-    timeLeft: timeLeft,
+    timeLeft: 1000,
   };
-
-  useEffect(() => {
-    socket.emit("user-joined", lobbyId, username);
-  }, [lobbyId, username]);
 
   return (
     <div>
       <div className="flex items-center justify-start">
         <h2>Lobby ID: {lobbyId}</h2>
         <p>Username: {username}</p>
-        <h2>Time Left: {timeLeft}</h2>
+        <h2>Time Left: 1000</h2>
       </div>
 
       <GameTable gameState={gameState} />

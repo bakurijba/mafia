@@ -1,10 +1,9 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { GameI } from "../../../models/lobby";
-import { players } from "../temporary";
+import { GameI } from "../../models/lobby";
 import { Modal, Popover, Whisper } from "rsuite";
-import { RoleId } from "../../../models/role";
+import { RoleId } from "../../models/role";
 import { useUnit } from "effector-react";
-import { $lobby } from "../../../store/lobby";
+import { $lobby } from "../../store/lobby";
 
 const seatStyle = {
   width: "20px",
@@ -73,8 +72,6 @@ const Seat: React.FC<SeatProps> = ({
 
   const playerName = players.find((play) => play.id === playerId)?.username;
 
-  console.log(players,playerName)
-
   const playerRole = gameState.roles?.get(playerId)?.roleId;
 
   return (
@@ -105,6 +102,7 @@ export const GameTable = ({ gameState }: GameTableProps) => {
   const tableRef = useRef<HTMLDivElement | null>(null);
   const [tableWidth, setTableWidth] = useState(0);
   const [tableHeight, setTableHeight] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const { remainingUsers } = gameState;
 
@@ -154,12 +152,24 @@ export const GameTable = ({ gameState }: GameTableProps) => {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
     if (tableRef.current) {
       const { offsetWidth, offsetHeight } = tableRef.current;
       setTableWidth(offsetWidth);
       setTableHeight(offsetHeight);
     }
-  }, [tableRef]);
+  }, [tableRef, windowWidth]);
 
   return (
     <div

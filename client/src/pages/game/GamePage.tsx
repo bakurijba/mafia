@@ -2,20 +2,25 @@ import { useUnit } from "effector-react";
 import { Game } from "../../components/Game";
 import {
   $lobbyId,
+  $registerUserName,
   $username,
   SimpleLobby,
   lobbyChanged,
   lobbyIdChanged,
+  userConnected,
+  userDisconnected,
 } from "../../store/lobby";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { socket } from "../../socket";
 
 export const GamePage = () => {
-  const userName = useUnit($username);
+  const [userName, registerUserName] = useUnit([$username, $registerUserName]);
   const lobby = useUnit($lobbyId);
   const changeLobbyId = useUnit(lobbyIdChanged);
   const changeLobby = useUnit(lobbyChanged);
+  const disconnectUser = useUnit(userDisconnected);
+  const connectUser = useUnit(userConnected)
 
   const params = useParams();
 
@@ -26,26 +31,34 @@ export const GamePage = () => {
       changeLobbyId(lobbyId);
     }
 
-    function lobbyJoined(lobby: SimpleLobby) {
-      console.log("joined", lobby);
+    function userJoined({userId, username}: {userId: string, username: string}) {
+      connectUser({userId, username});
+    }
 
+    function userDisconnected(user: { userId: string }) {
+      disconnectUser(user.userId);
+    }
+
+    function updateLobby(lobby: SimpleLobby) {
       changeLobby(lobby);
     }
 
-    function lobbyLeft(lobby: SimpleLobby) {
-      console.log("left", lobby);
-
-      changeLobby(lobby);
-    }
-
-    socket.on("user-joined", lobbyJoined);
-    socket.on("user-left", lobbyLeft);
+    socket.on("user-joined", userJoined);
+    socket.on("user-left", userDisconnected);
+    socket.on("user-disconnected", userDisconnected);
+    socket.on("lobby-updated", updateLobby);
 
     return () => {
-      socket.off("user-joined", lobbyJoined);
-      socket.off("user-left", lobbyLeft);
+      socket.off("user-joined", userJoined);
+      socket.off("user-left", userDisconnected);
+      socket.off("user-disconnected", userDisconnected);
+      socket.off("lobby-updated", updateLobby);
     };
-  }, [lobbyId, changeLobbyId, changeLobby]);
+  }, [lobbyId, changeLobbyId, changeLobby, disconnectUser, connectUser]);
+
+  useEffect(() => {
+    socket.emit("user-joined", lobbyId, userName);
+  }, [lobbyId, userName]);
 
   useEffect(() => {
     return () => {
@@ -53,5 +66,5 @@ export const GamePage = () => {
     };
   }, [lobbyId]);
 
-  return <Game username={userName} lobbyId={lobby} />;
+  return <Game username={userName || registerUserName} lobbyId={lobby} />;
 };

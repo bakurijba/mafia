@@ -12,8 +12,10 @@ import { useNavigate } from "react-router-dom";
 import { useUnit } from "effector-react";
 import {
   $lobbyId,
+  $registerUserName,
   $username,
   lobbyIdChanged,
+  registerUserNameChanged,
   userNameChanged,
 } from "../../store/lobby";
 import { socket } from "../../socket";
@@ -22,8 +24,7 @@ import { useEffect, useState } from "react";
 export const Lobby = () => {
   const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
   const [username, changeUserName] = useUnit([$username, userNameChanged]);
-
-  const [registerUserName, setRegisterUserName] = useState("");
+  const [registerUserName, setRegisterUserName] = useUnit([$registerUserName, registerUserNameChanged])
 
   const [isOpen, setIsOpen] = useState(false);
 

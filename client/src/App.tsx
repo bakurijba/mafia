@@ -1,8 +1,9 @@
 import { publicRoutes } from "./main/routes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout";
 
 import "./App.css";
-import { Layout } from "./components/Layout";
+import { Toaster } from "sonner";
 
 const Routing = () => {
   return (
@@ -22,6 +23,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routing />
+      <Toaster richColors visibleToasts={10} />
     </BrowserRouter>
   );
 }
