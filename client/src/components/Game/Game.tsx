@@ -4,6 +4,9 @@ import { Role, RoleId } from "../../models/role";
 import { useEffect, useState } from "react";
 import { useUnit } from "effector-react";
 import { $lobby, SimpleLobby } from "../../store/lobby";
+import { Button } from "rsuite";
+import { socket } from "../../socket";
+import { useNavigate } from "react-router-dom";
 
 interface GameProps {
   lobbyId: Lobby["lobbyId"];
@@ -33,6 +36,8 @@ const initRoles = (players?: SimpleLobby["gameState"]["remainingUsers"]) => {
 export const Game = ({ lobbyId, username }: GameProps) => {
   const [roles, setRoles] = useState<Map<string, Role>>();
 
+  const navigate = useNavigate();
+
   const lobby = useUnit($lobby);
 
   useEffect(() => {
@@ -46,12 +51,23 @@ export const Game = ({ lobbyId, username }: GameProps) => {
     timeLeft: 1000,
   };
 
+  const handleLeftGame = () => {
+    socket.emit("user-left", lobbyId, username);
+    navigate("/lobby");
+  };
+
   return (
     <div>
-      <div className="flex items-center justify-start">
-        <h2>Lobby ID: {lobbyId}</h2>
-        <p>Username: {username}</p>
-        <h2>Time Left: 1000</h2>
+      <div className="flex items-center justify-between px-3">
+        <div>
+          <h2>Lobby ID: {lobbyId}</h2>
+          <p>Username: {username}</p>
+          <h2>Time Left: 1000</h2>
+        </div>
+
+        <div>
+          <Button onClick={handleLeftGame}>Left Game</Button>
+        </div>
       </div>
 
       <GameTable gameState={gameState} />
