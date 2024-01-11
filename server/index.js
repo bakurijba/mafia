@@ -53,9 +53,12 @@ const handleLobbyCreation = (socket) => async (username) => {
     const lobbyId = generateUniqueId();
     const lobby = new Lobby({
       id: lobbyId,
-      players: [{ id: socket.id, username }],
       maxPlayers: 11,
       status: "waiting",
+      gameState: {
+        remainingUsers: [{ id: socket.id, username }],
+        phase: "day",
+      },
     });
 
     await lobby.save();
@@ -72,7 +75,7 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
 
-    const isPlayerInLobby = lobby.players.some(
+    const isPlayerInLobby = lobby.gameState.remainingUsers.some(
       (player) => player.id === socket.id
     );
 
@@ -80,8 +83,14 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
       // I join user to some lobby I want to create namespace no emit message to that namespace
       socket.join(lobbyId);
 
-      if (!isPlayerInLobby && lobby.players.length <= lobby.maxPlayers) {
-        lobby.players = [...lobby.players, { id: socket.id, username }];
+      if (
+        !isPlayerInLobby &&
+        lobby.gameState.remainingUsers.length <= lobby.maxPlayers
+      ) {
+        lobby.gameState.remainingUsers = [
+          ...lobby.gameState.remainingUsers,
+          { id: socket.id, username },
+        ];
       }
 
       await lobby.save();
@@ -102,18 +111,18 @@ const handleUserLeft = (socket) => async (lobbyId, username) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
 
-    const isPlayerInLobby = lobby.players.some(
+    const isPlayerInLobby = lobby.gameState.remainingUsers.some(
       (player) => player.id === socket.id
     );
 
     if (lobby) {
       socket.leave(lobbyId);
 
-      const index = lobby.players.findIndex(
+      const index = lobby.gameState.remainingUsers.findIndex(
         (player) => player.id === socket.id
       );
       if (isPlayerInLobby && index !== -1) {
-        lobby.players.splice(index, 1);
+        lobby.gameState.remainingUsers.splice(index, 1);
       }
 
       await lobby.save();
@@ -135,21 +144,21 @@ const handleUserDisconnect = (socket) => async () => {
 
   try {
     const userLobbies = await Lobby.find({
-      players: { $elemMatch: { id: socket.id } },
+      "gameState.remainingUsers": { $elemMatch: { id: socket.id } },
     });
 
     for (const lobby of userLobbies) {
-      const isPlayerInLobby = lobby.players.some(
+      const isPlayerInLobby = lobby.gameState.remainingUsers.some(
         (player) => player.id === socket.id
       );
 
       if (isPlayerInLobby) {
-        const index = lobby.players.findIndex(
+        const index = lobby.gameState.remainingUsers.findIndex(
           (player) => player.id === socket.id
         );
 
         if (index !== -1) {
-          lobby.players.splice(index, 1);
+          lobby.gameState.remainingUsers.splice(index, 1);
           io.to(lobby.id).emit("user-disconnected", { userId: socket.id });
           console.log(`${socket.id} removed from lobby ${lobby.id}`);
           await lobby.save();
@@ -159,7 +168,9 @@ const handleUserDisconnect = (socket) => async () => {
       }
     }
 
-    await Lobby.deleteMany({ players: { $size: 0 } });
+    await Lobby.deleteMany({
+      "gameState.remainingUsers": { $elemMatch: { id: socket.id } },
+    });
   } catch (error) {
     console.error("Error handling disconnect:", error.message);
   }
