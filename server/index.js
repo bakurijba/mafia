@@ -80,7 +80,6 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
     );
 
     if (lobby) {
-      // I join user to some lobby I want to create namespace no emit message to that namespace
       socket.join(lobbyId);
 
       if (
