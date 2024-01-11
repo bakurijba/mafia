@@ -29,16 +29,16 @@ const connectToDatabase = async () => {
 };
 
 const generateUniqueId = () => {
-  return Math.random().toString(36).substring(2, 8);
+  return Math.random().toString(36).substring(2, 12);
 };
 
 const handleUserConnection = (socket) => {
   console.log(`${socket.id} user connected`);
 
-  socket.on("add-message", (msg) => {
+  socket.on("add-message", ({ message, from }) => {
     socket.nsp.emit("receive-message", {
-      userId: socket.id,
-      message: msg,
+      userId: from,
+      message: message,
     });
   });
 
@@ -55,7 +55,7 @@ const handleLobbyCreation = (socket) => async (username) => {
       id: lobbyId,
       players: [{ id: socket.id, username }],
       maxPlayers: 11,
-      status: 'waiting'
+      status: "waiting",
     });
 
     await lobby.save();
@@ -86,8 +86,7 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
 
       await lobby.save();
 
-      // here instead of emitting event to single socket, I must emit it to namespace
-      io.to(lobbyId).emit("user-joined", { userId: socket.id, username });
+      socket.to(lobbyId).emit("user-joined", { userId: socket.id, username });
       io.to(lobbyId).emit("lobby-updated", lobby);
 
       console.log(`${socket.id} joined lobby ${lobbyId}`);
@@ -99,7 +98,7 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
   }
 };
 
-const handleUserLeft = (socket) => async (lobbyId) => {
+const handleUserLeft = (socket) => async (lobbyId, username) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
 
@@ -119,7 +118,7 @@ const handleUserLeft = (socket) => async (lobbyId) => {
 
       await lobby.save();
 
-      io.to(lobbyId).emit("user-left", { userId: socket.id });
+      io.to(lobbyId).emit("user-left", { userId: socket.id, username });
       io.to(lobbyId).emit("lobby-updated", lobby);
 
       console.log(`${socket.id} left lobby ${lobbyId}`);

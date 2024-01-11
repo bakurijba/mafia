@@ -2,6 +2,8 @@ import classNames from "classnames";
 import { socket } from "../../socket";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 import { Button, Input } from "rsuite";
+import { useUnit } from "effector-react";
+import { $username } from "../../store/auth";
 
 interface MessageReceive {
   userId: string;
@@ -11,6 +13,7 @@ interface MessageReceive {
 export const Chat = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<MessageReceive[]>([]);
+  const username = useUnit($username);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -18,7 +21,7 @@ export const Chat = () => {
     e.preventDefault();
 
     if (message) {
-      socket.emit("add-message", message);
+      socket.emit("add-message", { message, from: username });
     }
   };
 

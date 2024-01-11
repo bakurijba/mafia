@@ -65,11 +65,5 @@ export const GamePage = () => {
     socket.emit("user-joined", lobbyId, username);
   }, [lobbyId, username]);
 
-  useEffect(() => {
-    return () => {
-      socket.emit("lobby-left", lobbyId);
-    };
-  }, [lobbyId]);
-
   return <Game username={username} lobbyId={lobby} />;
 };

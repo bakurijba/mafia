@@ -15,18 +15,18 @@ export const login = authDomain.createEvent();
 
 export const saveUserNameInLocalStorageFx = authDomain.createEffect(
   (username: string) => {
-    localStorage.setItem("mafia-user", username);
+    sessionStorage.setItem("mafia-user", username);
   }
 );
 
 export const removeTokensFromLocalStorageFx = authDomain.createEffect(() => {
-  localStorage.removeItem("mafia-user");
+  sessionStorage.removeItem("mafia-user");
 });
 
 export const signOut = authDomain.createEvent();
 
 export const checkAuthStateFx = authDomain.createEffect(async () => {
-  const username = localStorage.getItem("mafia-user");
+  const username = sessionStorage.getItem("mafia-user");
 
   if (!username) {
     throw new Error("User not found");
