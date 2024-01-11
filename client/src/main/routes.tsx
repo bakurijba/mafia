@@ -2,9 +2,9 @@
 import { Suspense, lazy } from "react";
 import { Loading } from "../components/Loading";
 
-const HomePage = lazy(() =>
-  import("../pages/home/HomePage").then((module) => ({
-    default: module.HomePage,
+const LobbyPage = lazy(() =>
+  import("../pages/lobby/LobbyPage").then((module) => ({
+    default: module.LobbyPage,
   }))
 );
 
@@ -14,12 +14,18 @@ const GamePage = lazy(() =>
   }))
 );
 
-export const publicRoutes = [
+const LoginPage = lazy(() =>
+  import("../pages/login/LoginPage").then((module) => ({
+    default: module.LoginPage,
+  }))
+);
+
+export const privateRoutes = [
   {
-    path: "/",
+    path: "/lobby",
     component: (
       <Suspense fallback={<Loading />}>
-        <HomePage />
+        <LobbyPage />
       </Suspense>
     ),
   },
@@ -28,6 +34,17 @@ export const publicRoutes = [
     component: (
       <Suspense fallback={<Loading />}>
         <GamePage />
+      </Suspense>
+    ),
+  },
+];
+
+export const publicRoutes = [
+  {
+    path: "/",
+    component: (
+      <Suspense fallback={<Loading />}>
+        <LoginPage />
       </Suspense>
     ),
   },

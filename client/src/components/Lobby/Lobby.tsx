@@ -10,28 +10,23 @@ import {
 import { Chat } from "../Chat";
 import { useNavigate } from "react-router-dom";
 import { useUnit } from "effector-react";
-import {
-  $lobbyId,
-  $registerUserName,
-  $username,
-  lobbyIdChanged,
-  registerUserNameChanged,
-  userNameChanged,
-} from "../../store/lobby";
+import { $lobbyId, lobbyIdChanged } from "../../store/lobby";
 import { socket } from "../../socket";
 import { useEffect, useState } from "react";
+import { $username } from "../../store/auth";
 
 export const Lobby = () => {
   const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
-  const [username, changeUserName] = useUnit([$username, userNameChanged]);
-  const [registerUserName, setRegisterUserName] = useUnit([$registerUserName, registerUserNameChanged])
+  const userName = useUnit($username);
+
+  const [lobbyName, setLobbyName] = useState("");
 
   const [isOpen, setIsOpen] = useState(false);
 
   const navigate = useNavigate();
 
   const handleCreateLobby = () => {
-    socket.emit("lobby-create", registerUserName);
+    socket.emit("lobby-create", userName);
     setIsOpen(false);
   };
 
@@ -40,7 +35,7 @@ export const Lobby = () => {
   };
 
   const handleJoinLobby = () => {
-    if (!lobbyId || !username) {
+    if (!lobbyId || !userName) {
       return;
     }
 
@@ -82,12 +77,6 @@ export const Lobby = () => {
               value={lobbyId}
               onChange={(value) => changeLobbyId(value)}
             />
-            <Input
-              type="text"
-              placeholder="Enter Your Username"
-              value={username}
-              onChange={(value) => changeUserName(value)}
-            />
             <Button onClick={handleJoinLobby}>Join Lobby</Button>
 
             <Button onClick={handleOpen} appearance="ghost">
@@ -104,9 +93,9 @@ export const Lobby = () => {
           <div className="flex flex-col">
             <Input
               type="text"
-              placeholder="Enter Your Username"
-              value={registerUserName}
-              onChange={(value) => setRegisterUserName(value)}
+              placeholder="Enter Lobby Name"
+              value={lobbyName}
+              onChange={(value) => setLobbyName(value)}
             />
 
             <Button

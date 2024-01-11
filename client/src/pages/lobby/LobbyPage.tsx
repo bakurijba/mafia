@@ -1,5 +1,5 @@
 import { Lobby } from "../../components/Lobby";
 
-export const HomePage = () => {
+export const LobbyPage = () => {
   return <Lobby />;
 };

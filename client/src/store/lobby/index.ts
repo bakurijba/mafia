@@ -3,12 +3,7 @@ import { Lobby } from "../../models/lobby";
 import { assert } from "../../utils/assert";
 import { showErrorMessageFx, showSuccessMessageFx } from "../notifications";
 
-export const $username = createStore("");
 export const $lobbyId = createStore("");
-export const $registerUserName = createStore("");
-
-export const userNameChanged = createEvent<string>();
-export const registerUserNameChanged = createEvent<string>();
 export const lobbyIdChanged = createEvent<string>();
 
 export const $allLobies = createStore<Lobby[]>([]);
@@ -86,16 +81,6 @@ sample({
     return `${username} connected`;
   },
   target: showSuccessMessageFx,
-});
-
-sample({
-  clock: userNameChanged,
-  target: $username,
-});
-
-sample({
-  clock: registerUserNameChanged,
-  target: $registerUserName,
 });
 
 sample({
