@@ -68,7 +68,7 @@ const Seat: React.FC<SeatProps> = ({
   playerId,
   gameState,
 }) => {
-  const players = useUnit($lobby)?.players || [];
+  const players = useUnit($lobby)?.gameState.remainingUsers || [];
 
   const playerName = players.find((play) => play.id === playerId)?.username;
 
@@ -124,8 +124,8 @@ export const GameTable = ({ gameState }: GameTableProps) => {
         <Seat
           key={i}
           seatPosition={seatPosition}
-          onClick={() => handleAction(fromPlayerId, remainingUsers[i])}
-          playerId={remainingUsers[i]}
+          onClick={() => handleAction(fromPlayerId, remainingUsers[i].id)}
+          playerId={remainingUsers[i].id}
           gameState={gameState}
         />
       );

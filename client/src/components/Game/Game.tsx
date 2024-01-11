@@ -11,7 +11,7 @@ interface GameProps {
   username: string;
 }
 
-const initRoles = (players?: SimpleLobby["players"]) => {
+const initRoles = (players?: SimpleLobby["gameState"]["remainingUsers"]) => {
   const map = new Map<string, Role>();
 
   if (!players?.length) {
@@ -36,12 +36,12 @@ export const Game = ({ lobbyId, username }: GameProps) => {
   const lobby = useUnit($lobby);
 
   useEffect(() => {
-    setRoles(initRoles(lobby?.players));
-  }, [lobby?.players]);
+    setRoles(initRoles(lobby?.gameState.remainingUsers));
+  }, [lobby?.gameState.remainingUsers]);
 
   const gameState: GameI["gameState"] = {
     phase: "day",
-    remainingUsers: lobby?.players.map((player) => player.id) || [],
+    remainingUsers: lobby?.gameState.remainingUsers || [],
     roles: roles!,
     timeLeft: 1000,
   };

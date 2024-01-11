@@ -2,6 +2,7 @@ import { createEvent, createStore, sample } from "effector";
 import { Lobby } from "../../models/lobby";
 import { assert } from "../../utils/assert";
 import { showErrorMessageFx, showSuccessMessageFx } from "../notifications";
+import { GameState } from "../../models/game-state";
 
 export const $lobbyId = createStore("");
 export const lobbyIdChanged = createEvent<string>();
@@ -10,7 +11,8 @@ export const $allLobies = createStore<Lobby[]>([]);
 
 export interface SimpleLobby {
   id: string;
-  players: { id: string; username: string }[];
+  status: "waiting" | "inProgress" | "completed";
+  gameState: GameState;
 }
 
 export const $lobby = createStore<SimpleLobby | null>(null);
@@ -38,8 +40,13 @@ sample({
     assert(id, "user id not defined");
 
     const newLobby: SimpleLobby = {
-      id: lobby.id,
-      players: lobby.players.filter((player) => player.id !== id),
+      ...lobby,
+      gameState: {
+        ...lobby.gameState,
+        remainingUsers: lobby.gameState.remainingUsers.filter(
+          (player) => player.id !== id
+        ),
+      },
     };
 
     return newLobby;
@@ -55,11 +62,18 @@ sample({
     assert(userId, "user id not defined");
 
     const newLobby: SimpleLobby = {
-      id: lobby.id,
-      players: [
-        ...lobby.players,
-        { username: username || `Player ${lobby.players.length}`, id: userId },
-      ],
+      ...lobby,
+      gameState: {
+        ...lobby.gameState,
+        remainingUsers: [
+          ...lobby.gameState.remainingUsers,
+          {
+            username:
+              username || `Player ${lobby.gameState.remainingUsers.length}`,
+            id: userId,
+          },
+        ],
+      },
     };
 
     return newLobby;

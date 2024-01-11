@@ -6,7 +6,7 @@ export interface GameState {
   phase: "day" | "night";
   timeLeft: number;
   roles: Map<Player["playerId"], Role>;
-  remainingUsers: Player["playerId"][];
+  remainingUsers: { id: string; username: string }[];
   pendingNightActions?: Map<Player["playerId"], NightActionRequest>;
   pendingDayActions?: Map<Player["playerId"], DayActionRequest>;
 }

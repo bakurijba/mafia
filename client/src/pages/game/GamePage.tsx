@@ -45,6 +45,8 @@ export const GamePage = () => {
     }
 
     function updateLobby(lobby: SimpleLobby) {
+      console.log(lobby);
+
       changeLobby(lobby);
     }
 
