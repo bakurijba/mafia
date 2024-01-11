@@ -1,12 +1,9 @@
-// Define a schema for lobbies
-const { Schema, model } = require("mongoose");
+import { Schema, model } from "mongoose";
 
 const playerSchema = new Schema({
   id: String,
   username: String,
 });
 
-module.exports = {
-  player: model("Player", playerSchema),
-  playerSchema,
-};
+export const player = model("Player", playerSchema);
+export { playerSchema };

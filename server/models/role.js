@@ -1,5 +1,4 @@
-// Define a schema for lobbies
-const { Schema, model } = require("mongoose");
+import { Schema, model } from "mongoose";
 
 const roleSchema = new Schema({
   roleId: Number,
@@ -8,7 +7,5 @@ const roleSchema = new Schema({
   ability: String,
 });
 
-module.exports = {
-  role: model("Role", roleSchema),
-  roleSchema,
-};
+export const role = model("Role", roleSchema);
+export { roleSchema };

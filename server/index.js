@@ -1,12 +1,14 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const mongoose = require("mongoose");
-const Lobby = require("./models/lobby");
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import mongoose from "mongoose";
+import { Lobby } from "./models/lobby.js";
+import dontenv from 'dotenv'
+
 const PORT = 3000;
 const CLIENT_ORIGIN = "http://localhost:5173";
 
-require("dotenv").config();
+dontenv.config()
 
 const startServer = (port) => {
   const server = http.createServer(app);

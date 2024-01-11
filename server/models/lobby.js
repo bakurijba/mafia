@@ -1,6 +1,5 @@
-// Define a schema for lobbies
-const { Schema, model } = require("mongoose");
-const playerSchema = require("./player").playerSchema;
+import { Schema, model } from "mongoose";
+import { playerSchema } from "./player.js";
 
 const lobbySchema = new Schema({
   id: String,
@@ -12,7 +11,7 @@ const lobbySchema = new Schema({
   gameState: {
     phase: {
       type: String,
-      enum: ['day', 'night']
+      enum: ["day", "night"],
     },
     timeLeft: Number,
     roles: Map,
@@ -22,5 +21,4 @@ const lobbySchema = new Schema({
   },
 });
 
-// Create a mongoose model for lobbies
-module.exports = model("Lobby", lobbySchema);
+export const Lobby = model("Lobby", lobbySchema);
