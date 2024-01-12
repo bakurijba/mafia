@@ -14,6 +14,7 @@ import { $lobbyId, lobbyIdChanged } from "../../store/lobby";
 import { socket } from "../../socket";
 import { useEffect, useState } from "react";
 import { $username } from "../../store/auth";
+import { showErrorMessageFx } from "../../store/notifications";
 
 export const Lobby = () => {
   const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
@@ -39,7 +40,7 @@ export const Lobby = () => {
       return;
     }
 
-    navigate(`/game/${lobbyId}`);
+    socket.emit("user-try-joining", lobbyId);
   };
 
   useEffect(() => {
@@ -47,10 +48,20 @@ export const Lobby = () => {
       navigate(`/game/${lobbyId}`);
     }
 
+    function lobbyNotFound({ success }: { success: boolean }) {
+      if (success) {
+        return navigate(`/game/${lobbyId}`);
+      }
+
+      return showErrorMessageFx("Lobby Not Found");
+    }
+
     socket.on("lobby-created", lobbyCreated);
+    socket.on("user-try-joining", lobbyNotFound);
 
     return () => {
       socket.off("lobby-created", lobbyCreated);
+      socket.off("user-try-joining", lobbyNotFound);
     };
   }, [navigate]);
 
