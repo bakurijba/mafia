@@ -3,12 +3,12 @@ import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import { Lobby } from "./models/lobby.js";
-import dontenv from 'dotenv'
+import dontenv from "dotenv";
 
 const PORT = 3000;
 const CLIENT_ORIGIN = "http://localhost:5173";
 
-dontenv.config()
+dontenv.config();
 
 const startServer = (port) => {
   const server = http.createServer(app);
@@ -45,6 +45,7 @@ const handleUserConnection = (socket) => {
   });
 
   socket.on("lobby-create", handleLobbyCreation(socket));
+  socket.on("user-try-joining", handleTryJoining(socket));
   socket.on("user-joined", handleUserJoin(socket));
   socket.on("user-left", handleUserLeft(socket));
   socket.on("disconnect", handleUserDisconnect(socket));
@@ -73,11 +74,25 @@ const handleLobbyCreation = (socket) => async (username) => {
   }
 };
 
+const handleTryJoining= (socket) => async (lobbyId) => {
+  try {
+    const lobby = await Lobby.findOne({ id: lobbyId });
+
+    if (!lobby) {
+      socket.emit("user-try-joining", { success: false });
+    } else {
+      socket.emit("user-try-joining", { success: true });
+    }
+  } catch (error) {
+    console.error("Error joining lobby:", error.message);
+  }
+};
+
 const handleUserJoin = (socket) => async (lobbyId, username) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
 
-    const isPlayerInLobby = lobby.gameState.remainingUsers.some(
+    const isPlayerInLobby = lobby?.gameState?.remainingUsers.some(
       (player) => player.id === socket.id
     );
 
@@ -102,6 +117,8 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
       console.log(`${socket.id} joined lobby ${lobbyId}`);
     } else {
       socket.emit("lobby-not-found", { error: "Lobby not found" });
+
+      console.log("lobby not found");
     }
   } catch (error) {
     console.error("Error joining lobby:", error.message);
@@ -170,7 +187,7 @@ const handleUserDisconnect = (socket) => async () => {
     }
 
     await Lobby.deleteMany({
-      "gameState.remainingUsers": { $elemMatch: { id: socket.id } },
+      "gameState.remainingUsers": { $size: 0 },
     });
   } catch (error) {
     console.error("Error handling disconnect:", error.message);
