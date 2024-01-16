@@ -59,7 +59,7 @@ const handleLobbyCreation = (socket) => async (username) => {
     const lobbyId = generateUniqueId();
     const lobby = new Lobby({
       id: lobbyId,
-      maxPlayers: 11,
+      maxPlayers: 5,
       status: "waiting",
       gameState: {
         remainingUsers: [{ id: socket.id, username, isHost: true }],
@@ -81,9 +81,6 @@ const handleLobbyCreation = (socket) => async (username) => {
 const handleStartGame = (socket) => async (lobbyId) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
-
-    console.log(lobbyId, "lobbyId");
-    console.log(lobby, "lobby");
 
     if (!lobby) {
       socket.emit("lobby-not-found", { message: "Not Found" });

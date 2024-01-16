@@ -15,7 +15,7 @@ export const assignRoles = (shuffledUsers) => {
 
     if (roleCounts.mafia > 0) {
       role = {
-        roleId: 1,
+        roleId: 4,
         name: "mafia",
         description: "Mafia",
         ability: "kill",
@@ -23,7 +23,7 @@ export const assignRoles = (shuffledUsers) => {
       roleCounts.mafia--;
     } else if (roleCounts.don > 0) {
       role = {
-        roleId: 2,
+        roleId: 5,
         name: "don",
         description: "Don",
         ability: ["kill", "guess-detective"],
@@ -31,7 +31,7 @@ export const assignRoles = (shuffledUsers) => {
       roleCounts.don--;
     } else if (roleCounts.doctor > 0) {
       role = {
-        roleId: 3,
+        roleId: 2,
         name: "doctor",
         description: "Doctor",
         ability: "save",
@@ -39,7 +39,7 @@ export const assignRoles = (shuffledUsers) => {
       roleCounts.doctor--;
     } else if (roleCounts.detective > 0) {
       role = {
-        roleId: 4,
+        roleId: 3,
         name: "detective",
         description: "Detective",
         ability: "guess-mafia",
@@ -47,7 +47,7 @@ export const assignRoles = (shuffledUsers) => {
       roleCounts.detective--;
     } else if (roleCounts.killer > 0) {
       role = {
-        roleId: 5,
+        roleId: 6,
         name: "killer",
         description: "Killer",
         ability: "kill",
@@ -55,7 +55,7 @@ export const assignRoles = (shuffledUsers) => {
       roleCounts.killer--;
     } else {
       role = {
-        roleId: 6,
+        roleId: 1,
         name: "townperson",
         description: "Town Person",
       };
