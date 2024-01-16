@@ -4,6 +4,8 @@ import { Server } from "socket.io";
 import mongoose from "mongoose";
 import { Lobby } from "./models/lobby.js";
 import dontenv from "dotenv";
+import { assignRoles } from "./utils/assignRoles.js";
+import lodash from "lodash";
 
 const PORT = 3000;
 const CLIENT_ORIGIN = "http://localhost:5173";
@@ -48,6 +50,7 @@ const handleUserConnection = (socket) => {
   socket.on("user-try-joining", handleTryJoining(socket));
   socket.on("user-joined", handleUserJoin(socket));
   socket.on("user-left", handleUserLeft(socket));
+  socket.on("user-started-game", handleStartGame(socket));
   socket.on("disconnect", handleUserDisconnect(socket));
 };
 
@@ -59,8 +62,9 @@ const handleLobbyCreation = (socket) => async (username) => {
       maxPlayers: 11,
       status: "waiting",
       gameState: {
-        remainingUsers: [{ id: socket.id, username }],
+        remainingUsers: [{ id: socket.id, username, isHost: true }],
         phase: "day",
+        roles: new Map(),
       },
     });
 
@@ -74,7 +78,46 @@ const handleLobbyCreation = (socket) => async (username) => {
   }
 };
 
-const handleTryJoining= (socket) => async (lobbyId) => {
+const handleStartGame = (socket) => async (lobbyId) => {
+  try {
+    const lobby = await Lobby.findOne({ id: lobbyId });
+
+    console.log(lobbyId, "lobbyId");
+    console.log(lobby, "lobby");
+
+    if (!lobby) {
+      socket.emit("lobby-not-found", { message: "Not Found" });
+      return;
+    }
+
+    if (lobby.gameState.remainingUsers.length !== lobby.maxPlayers) {
+      socket.emit("lobby-is-not-full", { message: "Lobby is not full" });
+      return;
+    }
+
+    // shuffle users
+    const shuffledUsers = lodash.shuffle([...lobby.gameState.remainingUsers]);
+
+    // assign roles
+    const assignedRoles = assignRoles(shuffledUsers);
+
+    // crete map of roles
+    assignedRoles.forEach((role, index) => {
+      const user = shuffledUsers[index];
+      lobby.gameState.roles.set(user.id, role);
+    });
+
+    lobby.status = "inProgress";
+
+    await lobby.save();
+
+    io.to(lobbyId).emit("game-started", lobby);
+  } catch (error) {
+    console.error("Error starting game:", error.message);
+  }
+};
+
+const handleTryJoining = (socket) => async (lobbyId) => {
   try {
     const lobby = await Lobby.findOne({ id: lobbyId });
 
@@ -105,13 +148,16 @@ const handleUserJoin = (socket) => async (lobbyId, username) => {
       ) {
         lobby.gameState.remainingUsers = [
           ...lobby.gameState.remainingUsers,
-          { id: socket.id, username },
+          { id: socket.id, username, isHost: false },
         ];
       }
 
       await lobby.save();
 
-      socket.to(lobbyId).emit("user-joined", { userId: socket.id, username });
+      socket
+        .to(lobbyId)
+        .emit("user-joined", { userId: socket.id, username, isHost: false });
+
       io.to(lobbyId).emit("lobby-updated", lobby);
 
       console.log(`${socket.id} joined lobby ${lobbyId}`);
@@ -147,6 +193,10 @@ const handleUserLeft = (socket) => async (lobbyId, username) => {
 
       io.to(lobbyId).emit("user-left", { userId: socket.id, username });
       io.to(lobbyId).emit("lobby-updated", lobby);
+
+      await Lobby.deleteMany({
+        "gameState.remainingUsers": { $size: 0 },
+      });
 
       console.log(`${socket.id} left lobby ${lobbyId}`);
     } else {
