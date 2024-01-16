@@ -1,11 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Suspense, lazy } from "react";
-import { Loading } from "../components/Loading";
+import { LazyLoading as Loading } from "../components/LazyLoading";
 
 const LobbyPage = lazy(() =>
-  import("../pages/lobby/LobbyPage").then((module) => ({
-    default: module.LobbyPage,
-  }))
+  import("../pages/lobby/LobbyPage").then((module) => {
+    return {
+      default: module.LobbyPage,
+    };
+  })
 );
 
 const GamePage = lazy(() =>
@@ -15,9 +17,11 @@ const GamePage = lazy(() =>
 );
 
 const LoginPage = lazy(() =>
-  import("../pages/login/LoginPage").then((module) => ({
-    default: module.LoginPage,
-  }))
+  import("../pages/login/LoginPage").then((module) => {
+    return {
+      default: module.LoginPage,
+    };
+  })
 );
 
 export const privateRoutes = [

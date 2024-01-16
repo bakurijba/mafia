@@ -19,7 +19,7 @@ import {
   SearchParamsGate,
 } from "./store/routes";
 import { $checkingAuthState, $isAuthorized, AuthGate } from "./store/auth";
-import { Loading } from "./components/Loading";
+import { LazyLoading as Loading } from "./components/LazyLoading";
 import { useDelayLoading } from "./utils/use-delay-loading";
 
 import "./App.css";

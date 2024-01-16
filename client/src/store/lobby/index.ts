@@ -71,6 +71,7 @@ sample({
             username:
               username || `Player ${lobby.gameState.remainingUsers.length}`,
             id: userId,
+            isHost: false,
           },
         ],
       },

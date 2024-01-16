@@ -10,14 +10,13 @@ import {
 import { Chat } from "../Chat";
 import { useNavigate } from "react-router-dom";
 import { useUnit } from "effector-react";
-import { $lobbyId, lobbyIdChanged } from "../../store/lobby";
 import { socket } from "../../socket";
 import { useEffect, useState } from "react";
 import { $username } from "../../store/auth";
 import { showErrorMessageFx } from "../../store/notifications";
 
 export const Lobby = () => {
-  const [lobbyId, changeLobbyId] = useUnit([$lobbyId, lobbyIdChanged]);
+  const [lobbyId, changeLobbyId] = useState("");
   const userName = useUnit($username);
 
   const [lobbyName, setLobbyName] = useState("");
@@ -63,7 +62,7 @@ export const Lobby = () => {
       socket.off("lobby-created", lobbyCreated);
       socket.off("user-try-joining", lobbyNotFound);
     };
-  }, [navigate]);
+  }, [lobbyId, navigate]);
 
   return (
     <Container className="min-h-[calc(100vh-4rem)] px-4">
@@ -101,7 +100,7 @@ export const Lobby = () => {
         <Modal.Header>Create a lobby</Modal.Header>
 
         <Modal.Body>
-          <div className="flex flex-col">
+          <form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
             <Input
               type="text"
               placeholder="Enter Lobby Name"
@@ -110,13 +109,14 @@ export const Lobby = () => {
             />
 
             <Button
+              type="submit"
               onClick={handleCreateLobby}
               appearance="primary"
               className="ml-auto mt-2"
             >
               Create
             </Button>
-          </div>
+          </form>
         </Modal.Body>
       </Modal>
     </Container>

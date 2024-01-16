@@ -1,15 +1,18 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { GameI } from "../../models/lobby";
-import { Modal, Popover, Whisper } from "rsuite";
+import { Popover, Whisper } from "rsuite";
 import { RoleId } from "../../models/role";
 import { useUnit } from "effector-react";
 import { $lobby } from "../../store/lobby";
 
+import "./GameTable.css";
+
 const seatStyle = {
-  width: "20px",
-  height: "20px",
+  width: "70px",
+  height: "70px",
   borderRadius: "50%",
   backgroundColor: "#3498db",
+  color: "white",
   position: "absolute",
   top: "50%",
   left: "50%",
@@ -28,32 +31,11 @@ const ActionPopover = forwardRef<HTMLDivElement, PopoverProps>(
   ({ role, ...props }, ref) => {
     return (
       <Popover ref={ref} title="Title" {...props}>
-        <p>This is a Popover </p>
         <p>{role}</p>
       </Popover>
     );
   }
 );
-
-const Card = () => {
-  const [showCard, setShowCard] = useState(false);
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      setShowCard(true);
-    }, 500);
-
-    return () => clearTimeout(delay);
-  }, []);
-
-  return (
-    <Modal open={showCard} onClose={() => setShowCard(false)}>
-      <Modal.Header>Your role is:</Modal.Header>
-
-      <Modal.Body>Mafia</Modal.Body>
-    </Modal>
-  );
-};
 
 interface SeatProps {
   seatPosition: { x: number; y: number };
@@ -72,7 +54,7 @@ const Seat: React.FC<SeatProps> = ({
 
   const playerName = players.find((play) => play.id === playerId)?.username;
 
-  const playerRole = gameState.roles?.get(playerId)?.roleId;
+  const playerRole = gameState.roles?.[playerId]?.roleId;
 
   return (
     <Whisper
@@ -90,7 +72,7 @@ const Seat: React.FC<SeatProps> = ({
         }}
         onClick={onClick}
       >
-        <span className="absolute top-5 z-10 dark:text-white">
+        <span className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 dark:text-white">
           {playerName}
         </span>
       </div>
@@ -174,11 +156,9 @@ export const GameTable = ({ gameState }: GameTableProps) => {
   return (
     <div
       ref={tableRef}
-      className="w-[calc(100vh-10rem)] h-[calc(100vh-10rem)] relative rounded-full mx-auto my-4 border border-black dark:border-white"
+      className="game-table-container w-[calc(100vh-10rem)] h-[calc(100vh-10rem)] relative rounded-full mx-auto my-4 border border-black dark:border-white"
     >
       {renderSeats()}
-
-      <Card />
     </div>
   );
 };

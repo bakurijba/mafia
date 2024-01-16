@@ -52,16 +52,22 @@ export const GamePage = () => {
       changeLobby(lobby);
     }
 
+    function gameStarted(lobby: SimpleLobby) {
+      changeLobby(lobby);
+    }
+
     socket.on("user-joined", userJoined);
     socket.on("user-left", userLeft);
     socket.on("user-disconnected", userDisconnected);
     socket.on("lobby-updated", updateLobby);
+    socket.on("game-started", gameStarted);
 
     return () => {
       socket.off("user-joined", userJoined);
       socket.off("user-left", userLeft);
       socket.off("user-disconnected", userDisconnected);
       socket.off("lobby-updated", updateLobby);
+      socket.off("game-started", gameStarted);
     };
   }, [lobbyId, changeLobbyId, changeLobby, disconnectUser, connectUser]);
 
