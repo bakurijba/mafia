@@ -3,6 +3,7 @@ import { Game } from "../../components/Game";
 import {
   $lobbyId,
   SimpleLobby,
+  gameStarted,
   lobbyChanged,
   lobbyIdChanged,
   userConnected,
@@ -20,6 +21,7 @@ export const GamePage = () => {
   const changeLobby = useUnit(lobbyChanged);
   const disconnectUser = useUnit(userDisconnected);
   const connectUser = useUnit(userConnected);
+  const startGame = useUnit(gameStarted);
 
   const params = useParams();
 
@@ -54,6 +56,7 @@ export const GamePage = () => {
 
     function gameStarted(lobby: SimpleLobby) {
       changeLobby(lobby);
+      startGame();
     }
 
     socket.on("user-joined", userJoined);

@@ -2,8 +2,11 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { GameI } from "../../models/lobby";
 import { Popover, Whisper } from "rsuite";
 import { RoleId } from "../../models/role";
-import { useUnit } from "effector-react";
-import { $lobby } from "../../store/lobby";
+
+import { socket } from "../../socket";
+import { assert } from "../../utils/assert";
+
+import { GameState } from "../../models/game-state";
 
 import "./GameTable.css";
 
@@ -14,8 +17,6 @@ const seatStyle = {
   backgroundColor: "#3498db",
   color: "white",
   position: "absolute",
-  top: "50%",
-  left: "50%",
   transform: "translate(-50%, -50%)",
 } as const;
 
@@ -44,17 +45,42 @@ interface SeatProps {
   gameState: GameI["gameState"];
 }
 
+const getRoleName = (gameState: GameState, playerId: string) => {
+  const playerRole = gameState.roles?.[playerId]?.roleId;
+  const myRole = gameState.roles?.[socket.id || ""]?.roleId;
+
+  const isRoleVisible =
+    (playerRole === RoleId.DON || playerRole === RoleId.MAFIA) &&
+    (myRole === RoleId.DON || myRole === RoleId.MAFIA);
+
+  if (isRoleVisible) {
+    switch (playerRole) {
+      case RoleId.MAFIA:
+        return "Mafia";
+
+      case RoleId.DON:
+        return "Don";
+
+      default:
+        return "";
+    }
+  }
+
+  return "";
+};
+
 const Seat: React.FC<SeatProps> = ({
   seatPosition,
   onClick,
   playerId,
   gameState,
 }) => {
-  const players = useUnit($lobby)?.gameState.remainingUsers || [];
-
+  const players = gameState.remainingUsers || [];
   const playerName = players.find((play) => play.id === playerId)?.username;
 
   const playerRole = gameState.roles?.[playerId]?.roleId;
+
+  const roleName = getRoleName(gameState, playerId);
 
   return (
     <Whisper
@@ -72,9 +98,11 @@ const Seat: React.FC<SeatProps> = ({
         }}
         onClick={onClick}
       >
-        <span className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 dark:text-white">
-          {playerName}
-        </span>
+        <div className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 dark:text-white">
+          <span>{playerName}</span>
+
+          {roleName}
+        </div>
       </div>
     </Whisper>
   );
@@ -88,7 +116,7 @@ export const GameTable = ({ gameState }: GameTableProps) => {
 
   const { remainingUsers } = gameState;
 
-  const fromPlayerId = "from";
+  const fromPlayerId = socket.id;
 
   const renderSeats = () => {
     const seats = [];
@@ -106,7 +134,7 @@ export const GameTable = ({ gameState }: GameTableProps) => {
         <Seat
           key={i}
           seatPosition={seatPosition}
-          onClick={() => handleAction(fromPlayerId, remainingUsers[i].id)}
+          onClick={() => handleAction(remainingUsers[i].id, fromPlayerId)}
           playerId={remainingUsers[i].id}
           gameState={gameState}
         />
@@ -116,7 +144,13 @@ export const GameTable = ({ gameState }: GameTableProps) => {
     return seats;
   };
 
-  const handleAction = (fromPlayerId: string, toPlayerId: string) => {
+  const handleAction = (toPlayerId: string, fromPlayerId?: string) => {
+    assert(fromPlayerId, "socket is not connected");
+
+    if (toPlayerId === fromPlayerId) {
+      return console.log("its me");
+    }
+
     console.log(fromPlayerId, toPlayerId);
   };
 

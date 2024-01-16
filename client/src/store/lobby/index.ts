@@ -18,6 +18,8 @@ export interface SimpleLobby {
 export const $lobby = createStore<SimpleLobby | null>(null);
 export const lobbyChanged = createEvent<SimpleLobby>();
 
+export const gameStarted = createEvent<void>();
+
 export const userDisconnected = createEvent<string>();
 export const userConnected = createEvent<{
   userId: string;
@@ -27,6 +29,12 @@ export const userConnected = createEvent<{
 sample({
   clock: lobbyChanged,
   target: $lobby,
+});
+
+sample({
+  clock: gameStarted,
+  fn: () => "Game started !",
+  target: showSuccessMessageFx,
 });
 
 sample({
