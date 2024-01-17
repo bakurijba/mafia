@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { GameI } from "../../models/lobby";
+import { Lobby } from "../../models/lobby";
 import { Popover, Whisper } from "rsuite";
 import { RoleId } from "../../models/role";
 
@@ -7,6 +7,8 @@ import { socket } from "../../socket";
 import { assert } from "../../utils/assert";
 
 import { GameState } from "../../models/game-state";
+import { useUnit } from "effector-react";
+import { $lobby } from "../../store/lobby";
 
 import "./GameTable.css";
 
@@ -20,8 +22,21 @@ const seatStyle = {
   transform: "translate(-50%, -50%)",
 } as const;
 
+const cardStyle = {
+  width: "50px",
+  height: "80px",
+  backgroundColor: "#e74c3c",
+  color: "white",
+  borderRadius: "8px",
+  position: "absolute",
+  transform: "translate(-50%, -50%)",
+  zIndex: 1,
+  boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+  transition: "all 1s",
+} as const;
+
 interface GameTableProps {
-  gameState: GameI["gameState"];
+  gameState: Lobby["gameState"];
 }
 
 interface PopoverProps {
@@ -42,7 +57,7 @@ interface SeatProps {
   seatPosition: { x: number; y: number };
   onClick: () => void;
   playerId: string;
-  gameState: GameI["gameState"];
+  gameState: Lobby["gameState"];
 }
 
 const getRoleName = (gameState: GameState, playerId: string) => {
@@ -114,6 +129,8 @@ export const GameTable = ({ gameState }: GameTableProps) => {
   const [tableHeight, setTableHeight] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  const lobby = useUnit($lobby);
+
   const { remainingUsers } = gameState;
 
   const fromPlayerId = socket.id;
@@ -142,6 +159,48 @@ export const GameTable = ({ gameState }: GameTableProps) => {
     }
 
     return seats;
+  };
+
+  const renderCards = () => {
+    const gameStarted = lobby?.status === "inProgress";
+
+    // If the game has not started, position cards in the center
+    const centerPosition = {
+      x: tableWidth / 2,
+      y: tableHeight / 2,
+    };
+
+    const initialCardStyle = {
+      ...cardStyle,
+      top: centerPosition.y,
+      left: centerPosition.x,
+    };
+
+    const cards = remainingUsers.map((user, index) => {
+      const angle = (index * 360) / remainingUsers.length;
+      const cardPosition = calculateSeatPosition(
+        angle,
+        tableWidth,
+        tableHeight
+      );
+
+      return (
+        <div
+          key={`card-${index}`}
+          style={{
+            ...initialCardStyle,
+            transform: `translate(-50%, -50%) translate(0, ${index * 10}px)`,
+            top: gameStarted ? cardPosition.y : tableWidth / 2,
+            left: gameStarted ? cardPosition.x : tableWidth / 2,
+          }}
+          className="flex items-center justify-center"
+        >
+          {gameState.roles?.[user.id]?.name || ""}
+        </div>
+      );
+    });
+
+    return cards;
   };
 
   const handleAction = (toPlayerId: string, fromPlayerId?: string) => {
@@ -193,6 +252,7 @@ export const GameTable = ({ gameState }: GameTableProps) => {
       className="game-table-container w-[calc(100vh-10rem)] h-[calc(100vh-10rem)] relative rounded-full mx-auto my-4 border border-black dark:border-white"
     >
       {renderSeats()}
+      {renderCards()}
     </div>
   );
 };

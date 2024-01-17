@@ -2,21 +2,13 @@ import { createEvent, createStore, sample } from "effector";
 import { Lobby } from "../../models/lobby";
 import { assert } from "../../utils/assert";
 import { showErrorMessageFx, showSuccessMessageFx } from "../notifications";
-import { GameState } from "../../models/game-state";
 
 export const $lobbyId = createStore("");
 export const lobbyIdChanged = createEvent<string>();
-
 export const $allLobies = createStore<Lobby[]>([]);
 
-export interface SimpleLobby {
-  id: string;
-  status: "waiting" | "inProgress" | "completed";
-  gameState: GameState;
-}
-
-export const $lobby = createStore<SimpleLobby | null>(null);
-export const lobbyChanged = createEvent<SimpleLobby>();
+export const $lobby = createStore<Lobby | null>(null);
+export const lobbyChanged = createEvent<Lobby>();
 
 export const gameStarted = createEvent<void>();
 
@@ -33,7 +25,7 @@ sample({
 
 sample({
   clock: gameStarted,
-  fn: () => "Game started !",
+  fn: () => "Game started!",
   target: showSuccessMessageFx,
 });
 
@@ -47,7 +39,7 @@ sample({
     assert(lobby, "lobby not defined");
     assert(id, "user id not defined");
 
-    const newLobby: SimpleLobby = {
+    const newLobby: Lobby = {
       ...lobby,
       gameState: {
         ...lobby.gameState,
@@ -69,7 +61,7 @@ sample({
     assert(lobby, "lobby not defined");
     assert(userId, "user id not defined");
 
-    const newLobby: SimpleLobby = {
+    const newLobby: Lobby = {
       ...lobby,
       gameState: {
         ...lobby.gameState,

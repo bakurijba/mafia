@@ -1,7 +1,7 @@
 import { Player } from "./player";
 
 export interface ChatMessage {
-  playerId: Player["playerId"];
+  playerId: Player["id"];
   content: string;
   timestamp: number;
 }

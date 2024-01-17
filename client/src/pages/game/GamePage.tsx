@@ -2,7 +2,6 @@ import { useUnit } from "effector-react";
 import { Game } from "../../components/Game";
 import {
   $lobbyId,
-  SimpleLobby,
   gameStarted,
   lobbyChanged,
   lobbyIdChanged,
@@ -13,6 +12,7 @@ import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { socket } from "../../socket";
 import { $username } from "../../store/auth";
+import { Lobby } from "../../models/lobby";
 
 export const GamePage = () => {
   const username = useUnit($username);
@@ -50,11 +50,11 @@ export const GamePage = () => {
       disconnectUser(user.username);
     }
 
-    function updateLobby(lobby: SimpleLobby) {
+    function updateLobby(lobby: Lobby) {
       changeLobby(lobby);
     }
 
-    function gameStarted(lobby: SimpleLobby) {
+    function gameStarted(lobby: Lobby) {
       changeLobby(lobby);
       startGame();
     }
@@ -72,7 +72,7 @@ export const GamePage = () => {
       socket.off("lobby-updated", updateLobby);
       socket.off("game-started", gameStarted);
     };
-  }, [lobbyId, changeLobbyId, changeLobby, disconnectUser, connectUser]);
+  }, [lobbyId, changeLobbyId, changeLobby, disconnectUser, connectUser, startGame]);
 
   useEffect(() => {
     socket.emit("user-joined", lobbyId, username);

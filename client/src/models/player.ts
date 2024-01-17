@@ -1,5 +1,5 @@
 export interface Player {
-  playerId: string;
+  id: string;
   username: string;
-  status: "alive" | "dead";
+  isHost?: boolean;
 }

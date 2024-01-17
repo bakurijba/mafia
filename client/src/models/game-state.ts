@@ -5,8 +5,8 @@ import { Role } from "./role";
 export interface GameState {
   phase: "day" | "night";
   timeLeft: number;
-  roles: Record<Player["playerId"], Role>;
-  remainingUsers: { id: string; username: string, isHost: boolean }[];
-  pendingNightActions?: Map<Player["playerId"], NightActionRequest>;
-  pendingDayActions?: Map<Player["playerId"], DayActionRequest>;
+  roles: Record<Player["id"], Role>;
+  remainingUsers: Player[];
+  pendingNightActions?: Map<Player["id"], NightActionRequest>;
+  pendingDayActions?: Map<Player["id"], DayActionRequest>;
 }
