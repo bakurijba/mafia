@@ -1,13 +1,36 @@
 import { createEvent, createStore, sample } from "effector";
 import { Lobby } from "../../models/lobby";
-import { assert } from "../../utils/assert";
 import { showErrorMessageFx, showSuccessMessageFx } from "../notifications";
+import { Player } from "../../models/player";
+import { Role } from "../../models/role";
 
 export const $lobbyId = createStore("");
 export const lobbyIdChanged = createEvent<string>();
 export const $allLobies = createStore<Lobby[]>([]);
 
 export const $lobby = createStore<Lobby | null>(null);
+export const $gameState = $lobby.map((lobby) => {
+  const rolesMap: Record<Player["id"], Role> = {};
+
+  for (const userId in lobby?.gameState?.roles) {
+    if (lobby?.gameState?.roles?.[userId]) {
+      const user = lobby.gameState.roles[userId];
+
+      rolesMap[userId] = user;
+    }
+  }
+
+  const gameState: Lobby["gameState"] = {
+    phase: lobby?.gameState?.phase || "day",
+    remainingUsers: lobby?.gameState.remainingUsers || [],
+    gameStarted: lobby?.status === "inProgress" || false,
+    roles: rolesMap,
+    timeLeft: 1000,
+  };
+
+  return gameState;
+});
+
 export const lobbyChanged = createEvent<Lobby>();
 
 export const gameStarted = createEvent<void>();
@@ -19,65 +42,20 @@ export const userConnected = createEvent<{
 }>();
 
 sample({
-  clock: lobbyChanged,
-  target: $lobby,
-});
-
-sample({
   clock: gameStarted,
   fn: () => "Game started!",
   target: showSuccessMessageFx,
 });
 
 sample({
-  clock: userDisconnected,
-  source: $lobby,
-  filter(lobby, userId) {
-    return !!lobby && !!userId;
-  },
-  fn(lobby, id) {
-    assert(lobby, "lobby not defined");
-    assert(id, "user id not defined");
-
-    const newLobby: Lobby = {
-      ...lobby,
-      gameState: {
-        ...lobby.gameState,
-        remainingUsers: lobby.gameState.remainingUsers.filter(
-          (player) => player.id !== id
-        ),
-      },
-    };
-
-    return newLobby;
-  },
+  clock: lobbyChanged,
   target: $lobby,
 });
 
 sample({
-  clock: userConnected,
-  source: $lobby,
-  fn(lobby, { userId, username }) {
-    assert(lobby, "lobby not defined");
-    assert(userId, "user id not defined");
-
-    const newLobby: Lobby = {
-      ...lobby,
-      gameState: {
-        ...lobby.gameState,
-        remainingUsers: [
-          ...lobby.gameState.remainingUsers,
-          {
-            username:
-              username || `Player ${lobby.gameState.remainingUsers.length}`,
-            id: userId,
-            isHost: false,
-          },
-        ],
-      },
-    };
-
-    return newLobby;
+  clock: userDisconnected,
+  fn() {
+    return null;
   },
   target: $lobby,
 });

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { Lobby } from "../../models/lobby";
 import { Popover, Whisper } from "rsuite";
 import { RoleId } from "../../models/role";
@@ -8,7 +8,7 @@ import { assert } from "../../utils/assert";
 
 import { GameState } from "../../models/game-state";
 import { useUnit } from "effector-react";
-import { $lobby } from "../../store/lobby";
+import { $gameState } from "../../store/lobby";
 
 import "./GameTable.css";
 
@@ -35,19 +35,33 @@ const cardStyle = {
   transition: "all 1s",
 } as const;
 
-interface GameTableProps {
+interface PopoverProps {
+  role?: RoleId;
+  userId: string;
   gameState: Lobby["gameState"];
 }
 
-interface PopoverProps {
-  role?: RoleId;
-}
-
 const ActionPopover = forwardRef<HTMLDivElement, PopoverProps>(
-  ({ role, ...props }, ref) => {
+  ({ role, userId, ...props }, ref) => {
+    const notMe = userId !== socket.id;
+
+    const content = useMemo(() => {
+      if (notMe) {
+        if (
+          role === RoleId.DETECTIVE ||
+          role === RoleId.TOWNPERSON ||
+          role === RoleId.DOCTOR
+        ) {
+          return <div>Kill</div>;
+        }
+      }
+
+      return <div>Teammate</div>;
+    }, [notMe, role]);
+
     return (
-      <Popover ref={ref} title="Title" {...props}>
-        <p>{role}</p>
+      <Popover ref={ref} {...props}>
+        {content}
       </Popover>
     );
   }
@@ -94,7 +108,6 @@ const Seat: React.FC<SeatProps> = ({
   const playerName = players.find((play) => play.id === playerId)?.username;
 
   const playerRole = gameState.roles?.[playerId]?.roleId;
-
   const roleName = getRoleName(gameState, playerId);
 
   return (
@@ -102,7 +115,13 @@ const Seat: React.FC<SeatProps> = ({
       trigger="click"
       placement={"auto"}
       controlId={`control-id-${"auto"}`}
-      speaker={<ActionPopover role={playerRole} />}
+      speaker={
+        <ActionPopover
+          role={playerRole}
+          userId={playerId}
+          gameState={gameState}
+        />
+      }
     >
       <div
         role="button"
@@ -123,13 +142,13 @@ const Seat: React.FC<SeatProps> = ({
   );
 };
 
-export const GameTable = ({ gameState }: GameTableProps) => {
+export const GameTable = () => {
   const tableRef = useRef<HTMLDivElement | null>(null);
   const [tableWidth, setTableWidth] = useState(0);
   const [tableHeight, setTableHeight] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  const lobby = useUnit($lobby);
+  const gameState = useUnit($gameState);
 
   const { remainingUsers } = gameState;
 
@@ -162,7 +181,7 @@ export const GameTable = ({ gameState }: GameTableProps) => {
   };
 
   const renderCards = () => {
-    const gameStarted = lobby?.status === "inProgress";
+    const gameStarted = gameState.gameStarted;
 
     // If the game has not started, position cards in the center
     const centerPosition = {

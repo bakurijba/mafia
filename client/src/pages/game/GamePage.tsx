@@ -72,7 +72,14 @@ export const GamePage = () => {
       socket.off("lobby-updated", updateLobby);
       socket.off("game-started", gameStarted);
     };
-  }, [lobbyId, changeLobbyId, changeLobby, disconnectUser, connectUser, startGame]);
+  }, [
+    lobbyId,
+    changeLobbyId,
+    changeLobby,
+    disconnectUser,
+    connectUser,
+    startGame,
+  ]);
 
   useEffect(() => {
     socket.emit("user-joined", lobbyId, username);

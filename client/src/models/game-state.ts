@@ -3,6 +3,7 @@ import { Player } from "./player";
 import { Role } from "./role";
 
 export interface GameState {
+  gameStarted: boolean;
   phase: "day" | "night";
   timeLeft: number;
   roles: Record<Player["id"], Role>;

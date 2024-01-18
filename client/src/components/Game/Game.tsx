@@ -1,50 +1,27 @@
-import { GameI, Lobby } from "../../models/lobby";
 import { GameTable } from "./GameTable";
-import { Role } from "../../models/role";
-import { useMemo } from "react";
 import { useUnit } from "effector-react";
-import { $lobby } from "../../store/lobby";
+import { $gameState, $lobby } from "../../store/lobby";
 import { Button } from "rsuite";
 import { socket } from "../../socket";
 import { useNavigate } from "react-router-dom";
-import { Player } from "../../models/player";
 
 interface GameProps {
-  lobbyId: Lobby["lobbyId"];
-  gameState?: GameI["gameState"];
   username: string;
+  lobbyId: string;
 }
 
 export const Game = ({ lobbyId, username }: GameProps) => {
   const navigate = useNavigate();
 
+  const gameState = useUnit($gameState);
   const lobby = useUnit($lobby);
 
-  const isHost = lobby?.gameState.remainingUsers?.find(
+  const isHost = gameState.remainingUsers?.find(
     (user) => user.username === username && user.isHost
   );
 
-  const map = useMemo(() => {
-    const userMap: Record<Player["playerId"], Role> = {};
-
-    for (const userId in lobby?.gameState?.roles) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (lobby?.gameState?.roles.hasOwnProperty(userId)) {
-        const user = lobby?.gameState?.roles[userId];
-
-        userMap[userId] = user;
-      }
-    }
-
-    return userMap;
-  }, [lobby?.gameState?.roles]);
-
-  const gameState: GameI["gameState"] = {
-    phase: "day",
-    remainingUsers: lobby?.gameState.remainingUsers || [],
-    roles: map,
-    timeLeft: 1000,
-  };
+  const isGameAlreadyStarted = gameState.gameStarted;
+  const isLobbyFull = gameState.remainingUsers.length === lobby?.maxPlayers;
 
   const handleLeftGame = () => {
     socket.emit("user-left", lobbyId, username);
@@ -69,14 +46,14 @@ export const Game = ({ lobbyId, username }: GameProps) => {
           <Button
             onClick={handleStartGame}
             appearance="ghost"
-            disabled={!isHost}
+            disabled={!isHost || isGameAlreadyStarted || !isLobbyFull}
           >
             Start Game
           </Button>
         </div>
       </div>
 
-      <GameTable gameState={gameState} />
+      <GameTable />
     </div>
   );
 };
